@@ -76,7 +76,7 @@
   animateFollower();
 
   // Scale up on interactive elements
-  const interactives = document.querySelectorAll('a, button, .dest-card, .hotel-card, .gallery-item');
+  const interactives = document.querySelectorAll('a, button, .dest-card, .hotel-card, .location-card, .gallery-item');
   interactives.forEach(el => {
     el.addEventListener('mouseenter', () => {
       gsap.to(cursor,   { scale: 2,   duration: 0.3 });
@@ -454,6 +454,297 @@ window.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', updateCarousel);
 })();
 
+// ── 9. ACCOMMODATION MAP & DETAILS ───────────────────────────────
+(function initAccommodationMap() {
+  const accommodations = [
+    {
+      id: 'hotel-gorj',
+      name: 'Hotel Gorj',
+      region: 'Târgu Jiu',
+      short: 'Hotel confortabil în centrul orașului, lângă operele lui Brâncuși.',
+      description: 'Hotel Gorj este alegerea ideală pentru vizite culturale în Târgu Jiu, cu camere moderne, mic dejun inclus și acces rapid la principalele atracții din județul Gorj.',
+      price: '€120 / noapte',
+      rating: '4 ★',
+      amenities: ['Mic dejun inclus', 'WiFi gratuit', 'Parcare', 'Recepție 24h'],
+      googleQuery: 'Hotel+Gorj+Targu+Jiu+Gorj+Romania',
+      googleUrl: 'https://www.google.com/maps/search/?api=1&query=Hotel+Gorj+Targu+Jiu+Gorj+Romania',
+      images: [
+        'https://images.unsplash.com/photo-1501117716987-c8eaa5d0f0f8?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
+      ],
+      position: { left: '52%', top: '62%' },
+      distanceFromPrevious: '0 km (prima locație)',
+      previous: 'Prima cazare din listă'
+    },
+    {
+      id: 'hotel-central',
+      name: 'Hotel Central Târgu Jiu',
+      region: 'Târgu Jiu',
+      short: 'Hotel modern în inima orașului, ideal pentru city break-uri.',
+      description: 'Hotel Central oferă camere elegante, restaurant cu specific local și o poziție centrală foarte bună pentru explorarea orașului și a obiectivelor turistice din Gorj.',
+      price: '€105 / noapte',
+      rating: '4 ★',
+      amenities: ['Camere moderne', 'Mic dejun', 'WiFi', 'Serviciu room service'],
+      googleQuery: 'Hotel+Central+Targu+Jiu+Gorj+Romania',
+      googleUrl: 'https://www.google.com/maps/search/?api=1&query=Hotel+Central+Targu+Jiu+Gorj+Romania',
+      images: [
+        'https://images.unsplash.com/photo-1496417263034-38ec4f0b665a?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80'
+      ],
+      position: { left: '54%', top: '65%' },
+      distanceFromPrevious: '2 km / 6 min',
+      previous: 'Hotel Gorj'
+    },
+    {
+      id: 'casa-gorjeana',
+      name: 'Casa Gorjeană',
+      region: 'Târgu Jiu',
+      short: 'Pensiune boutique cu atmosferă autentică oltenească.',
+      description: 'Casa Gorjeană combină ospitalitatea locală cu facilități confortabile și este o opțiune excelentă pentru cine caută o experiență autentică de cazare în Gorj.',
+      price: '€90 / noapte',
+      rating: '4 ★',
+      amenities: ['Terasa', 'WiFi', 'Mic dejun tradițional', 'Grădină'],
+      googleQuery: 'Casa+Gorjeana+Targu+Jiu+Gorj+Romania',
+      googleUrl: 'https://www.google.com/maps/search/?api=1&query=Casa+Gorjeana+Targu+Jiu+Gorj+Romania',
+      images: [
+        'https://images.unsplash.com/photo-1551907236-4eecd230f69b?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80'
+      ],
+      position: { left: '51%', top: '67%' },
+      distanceFromPrevious: '1.5 km / 5 min',
+      previous: 'Hotel Central Târgu Jiu'
+    },
+    {
+      id: 'vila-ozon-ranca',
+      name: 'Vila Ozon Rânca',
+      region: 'Rânca',
+      short: 'Vila de munte cu camere moderne și vedere către vârfuri.',
+      description: 'Vila Ozon Rânca este foarte apreciată de iubitorii de munte, cu camere confortabile, acces rapid la pârtii și o ambianță prietenoasă.',
+      price: '€70 / noapte',
+      rating: '4 ★',
+      amenities: ['WiFi', 'Mic dejun', 'Parcare', 'Saună'],
+      googleQuery: 'Vila+Ozon+Ranca+Romania',
+      googleUrl: 'https://www.google.com/maps/search/?api=1&query=Vila+Ozon+Ranca+Romania',
+      images: [
+        'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80'
+      ],
+      position: { left: '60%', top: '38%' },
+      distanceFromPrevious: '32 km / 44 min',
+      previous: 'Casa Gorjeană'
+    },
+    {
+      id: 'pensiunea-alpin',
+      name: 'Pensiunea Alpin',
+      region: 'Rânca',
+      short: 'Spațiu confortabil cu note elegante, aproape de pârtii.',
+      description: 'Pensiunea Alpin oferă camere moderne, atmosferă caldă și acces ușor la principalele puncte de interes din Rânca.',
+      price: '€82 / noapte',
+      rating: '4 ★',
+      amenities: ['Mic dejun', 'WiFi', 'Grădină', 'Șemineu'],
+      googleQuery: 'Pensiunea+Alpin+Ranca+Romania',
+      googleUrl: 'https://www.google.com/maps/search/?api=1&query=Pensiunea+Alpin+Ranca+Romania',
+      images: [
+        'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80'
+      ],
+      position: { left: '58%', top: '34%' },
+      distanceFromPrevious: '4 km / 9 min',
+      previous: 'Vila Ozon Rânca'
+    },
+    {
+      id: 'pensiunea-antonia',
+      name: 'Pensiunea Antonia Spa',
+      region: 'Transalpina / Rânca',
+      short: 'Spa modern și panoramă 180° către Munții Parâng.',
+      description: 'Pensiunea Antonia Spa oferă facilități wellness, camere spațioase și o priveliște impresionantă, potrivită pentru relaxare după drumeții.',
+      price: '€115 / noapte',
+      rating: '5 ★',
+      amenities: ['Spa', 'Jacuzzi', 'WiFi', 'Terasa'],
+      googleQuery: 'Pensiunea+Antonia+Spa+Ranca+Romania',
+      googleUrl: 'https://www.google.com/maps/search/?api=1&query=Pensiunea+Antonia+Spa+Ranca+Romania',
+      images: [
+        'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80'
+      ],
+      position: { left: '62%', top: '30%' },
+      distanceFromPrevious: '6 km / 12 min',
+      previous: 'Pensiunea Alpin'
+    },
+    {
+      id: 'cabana-terra',
+      name: 'Cabana Terra',
+      region: 'Rânca',
+      short: 'Cabana cu restaurant și mâncare tradițională, aproape de natură.',
+      description: 'Cabana Terra este recunoscută pentru ospitalitatea locală și restaurantul său, oferind camere calde și un ambient relaxant după o zi de drumeții.',
+      price: '€95 / noapte',
+      rating: '4 ★',
+      amenities: ['Restaurant', 'WiFi', 'Parcare', 'Spațiu evenimente'],
+      googleQuery: 'Cabana+Terra+Ranca+Romania',
+      googleUrl: 'https://www.google.com/maps/search/?api=1&query=Cabana+Terra+Ranca+Romania',
+      images: [
+        'https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
+      ],
+      position: { left: '61%', top: '37%' },
+      distanceFromPrevious: '2.5 km / 7 min',
+      previous: 'Pensiunea Antonia Spa'
+    },
+    {
+      id: 'pensiunea-tismana',
+      name: 'Pensiunea Tismana Forest Retreat',
+      region: 'Tismana',
+      short: 'Retreat eco și wellness în pădurea de lângă Mănăstirea Tismana.',
+      description: 'Această pensiune eco este o enclavă liniștită în padure, perfectă pentru relaxare și pentru cei care vor să exploreze zona istorică a Tismanei.',
+      price: '€98 / noapte',
+      rating: '4 ★',
+      amenities: ['Natură', 'WiFi', 'Mic dejun tradițional', 'Povești locale'],
+      googleQuery: 'Pensiunea+Tismana+Romania',
+      googleUrl: 'https://www.google.com/maps/search/?api=1&query=Pensiunea+Tismana+Romania',
+      images: [
+        'https://images.unsplash.com/photo-1501117716987-c8eaa5d0f0f8?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1472220625704-91e1462799b2?auto=format&fit=crop&w=1200&q=80'
+      ],
+      position: { left: '24%', top: '46%' },
+      distanceFromPrevious: '76 km / 1h 30 min',
+      previous: 'Cabana Terra'
+    },
+    {
+      id: 'taverna-olteanului',
+      name: 'Taverna Olteanului',
+      region: 'Baia de Fier',
+      short: 'Pensiune cu restaurant tradițional, ideală pentru grupuri.',
+      description: 'Taverna Olteanului este apreciată pentru restaurantul său tradițional și cazarea confortabilă, cu acces rapid la Peștera Muierilor și Cheile Sohodolului.',
+      price: '€85 / noapte',
+      rating: '4 ★',
+      amenities: ['Restaurant tradițional', 'Parcare', 'WiFi', 'Camere spațioase'],
+      googleQuery: 'Taverna+Olteanului+Baia+de+Fier+Romania',
+      googleUrl: 'https://www.google.com/maps/search/?api=1&query=Taverna+Olteanului+Baia+de+Fier+Romania',
+      images: [
+        'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80'
+      ],
+      position: { left: '64%', top: '50%' },
+      distanceFromPrevious: '29 km / 35 min',
+      previous: 'Pensiunea Tismana Forest Retreat'
+    },
+    {
+      id: 'vila-alpina',
+      name: 'Vila Alpina Transalpina',
+      region: 'Transalpina',
+      short: 'Vila privată de munte cu șemineu și panoramă către Transalpina.',
+      description: 'Vila Alpina este o opțiune premium pentru cei care doresc o experiență exclusivă la munte, aproape de șoseaua Transalpina și de natură.',
+      price: '€180 / noapte',
+      rating: '5 ★',
+      amenities: ['Șemineu', 'Jacuzzi', 'WiFi', 'Grătar', 'Vedere spre munte'],
+      googleQuery: 'Vila+Alpina+Transalpina+Romania',
+      googleUrl: 'https://www.google.com/maps/search/?api=1&query=Vila+Alpina+Transalpina+Romania',
+      images: [
+        'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80'
+      ],
+      position: { left: '74%', top: '28%' },
+      distanceFromPrevious: '18 km / 28 min',
+      previous: 'Taverna Olteanului'
+    }
+  ];
+
+  const listContainer = document.getElementById('accom-locations');
+  const mapFrame = document.getElementById('accom-map-frame');
+  const detailPanel = document.getElementById('accom-detail-panel');
+  const detailTitle = document.getElementById('accom-detail-title');
+  const detailText = document.getElementById('accom-detail-text');
+  const detailMeta = document.getElementById('accom-detail-meta');
+  const detailDist = document.getElementById('accom-detail-dist');
+  const detailGallery = document.getElementById('accom-detail-gallery');
+  const detailGoogle = document.getElementById('accom-detail-google');
+  const mapFrameIframe = document.getElementById('google-map-frame');
+  const detailClose = document.getElementById('accom-detail-close');
+  const detailCloseBtn = document.getElementById('accom-detail-closebtn');
+
+  if (!listContainer || !mapFrame || !detailPanel) return;
+
+  function makeCard(location) {
+    const card = document.createElement('article');
+    card.className = 'location-card';
+    card.dataset.id = location.id;
+    card.innerHTML = `
+      <div class="location-card-main">
+        <span class="location-card-region">${location.region}</span>
+        <h3 class="location-card-title">${location.name}</h3>
+        <div class="location-card-meta">
+          <span>${location.rating}</span>
+          <span>·</span>
+          <span>${location.price}</span>
+        </div>
+      </div>
+      <div class="location-card-hover">${location.short}</div>
+    `;
+    card.addEventListener('click', () => openLocation(location.id));
+    return card;
+  }
+
+  function makePin(location) {
+    const pin = document.createElement('button');
+    pin.type = 'button';
+    pin.className = 'accom-map-pin';
+    pin.dataset.id = location.id;
+    pin.dataset.title = location.name;
+    pin.style.left = location.position.left;
+    pin.style.top = location.position.top;
+    pin.addEventListener('click', () => openLocation(location.id));
+    return pin;
+  }
+
+  function openLocation(id) {
+    const location = accommodations.find(item => item.id === id);
+    if (!location) return;
+
+    detailTitle.textContent = location.name;
+    detailText.textContent = location.description;
+    detailMeta.innerHTML = `
+      <strong>Regiune:</strong> ${location.region} · <strong>Preț:</strong> ${location.price}<br>
+      <strong>Rating:</strong> ${location.rating} · <strong>Facilități:</strong> ${location.amenities.join(' · ')}
+    `;
+    detailDist.innerHTML = `
+      <strong>Distanță față de locația precedentă:</strong> ${location.distanceFromPrevious}<br>
+      <strong>Previzualizare:</strong> ${location.previous}
+    `;
+    detailGoogle.href = location.googleUrl;
+    detailGoogle.textContent = 'Vezi pe Google Maps';
+    mapFrameIframe.src = `https://www.google.com/maps?q=${encodeURIComponent(location.googleQuery)}&output=embed`;
+
+    detailGallery.innerHTML = '';
+    location.images.forEach(src => {
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = location.name;
+      detailGallery.appendChild(img);
+    });
+
+    detailPanel.classList.remove('hidden');
+    detailPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function closeDetails() {
+    detailPanel.classList.add('hidden');
+  }
+
+  accommodations.forEach(location => {
+    listContainer.appendChild(makeCard(location));
+    mapFrame.appendChild(makePin(location));
+  });
+
+  detailClose?.addEventListener('click', closeDetails);
+  detailCloseBtn?.addEventListener('click', closeDetails);
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !detailPanel.classList.contains('hidden')) {
+      closeDetails();
+    }
+  });
+})();
+
 // ── 9. FORM SUBMISSION ────────────────────────────────────────────
 (function initForm() {
   const form    = document.getElementById('booking-form');
@@ -471,6 +762,236 @@ window.addEventListener('DOMContentLoaded', () => {
   checkin && checkin.addEventListener('change', () => {
     if (checkout) checkout.min = checkin.value;
   });
+
+  const API_BASE = '';
+  const tokenKey = 'gorjBookingToken';
+  const loginForm = document.getElementById('login-form');
+  const registerForm = document.getElementById('register-form');
+  const accountPanel = document.getElementById('account-panel');
+  const accountName = document.getElementById('account-name');
+  const reservationList = document.getElementById('reservation-list');
+  const reservationCount = document.getElementById('account-reservation-count');
+  const guestNote = document.getElementById('guest-note');
+  const authTabs = document.querySelectorAll('.account-tab');
+  const logoutBtn = document.getElementById('logout-btn');
+  const loginEmail = document.getElementById('login-email');
+  const loginPassword = document.getElementById('login-password');
+  const registerName = document.getElementById('register-name');
+  const registerEmail = document.getElementById('register-email');
+  const registerPassword = document.getElementById('register-password');
+  const registerPasswordConfirm = document.getElementById('register-password-confirm');
+  const bookingEmail = document.getElementById('email');
+
+  function getToken() {
+    return localStorage.getItem(tokenKey);
+  }
+
+  function setToken(token) {
+    localStorage.setItem(tokenKey, token);
+  }
+
+  function clearToken() {
+    localStorage.removeItem(tokenKey);
+  }
+
+  async function apiFetch(path, options = {}) {
+    const token = getToken();
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE}${path}`, {
+      credentials: 'same-origin',
+      ...options,
+      headers
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw data;
+    }
+    return data;
+  }
+
+  async function fetchProfile() {
+    try {
+      return await apiFetch('/api/profile');
+    } catch (error) {
+      clearToken();
+      return null;
+    }
+  }
+
+  async function fetchReservations() {
+    try {
+      const result = await apiFetch('/api/bookings');
+      return result.bookings || [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  async function loginUser(email, password) {
+    return apiFetch('/api/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    });
+  }
+
+  async function registerUser(name, email, password) {
+    return apiFetch('/api/register', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, password })
+    });
+  }
+
+  async function createBooking(bookingData) {
+    return apiFetch('/api/bookings', {
+      method: 'POST',
+      body: JSON.stringify(bookingData)
+    });
+  }
+
+  function setVisibleTab(tab) {
+    authTabs.forEach(button => {
+      const isActive = button.dataset.tab === tab;
+      button.classList.toggle('active', isActive);
+    });
+
+    if (loginForm && registerForm) {
+      loginForm.classList.toggle('hidden', tab !== 'login');
+      registerForm.classList.toggle('hidden', tab !== 'register');
+    }
+  }
+
+  authTabs.forEach(button => {
+    button.addEventListener('click', () => {
+      setVisibleTab(button.dataset.tab);
+    });
+  });
+
+  function renderReservations(bookings) {
+    if (!reservationList) return;
+
+    reservationList.innerHTML = '';
+    if (!bookings.length) {
+      reservationList.innerHTML = '<p class="reservation-empty">Nu există rezervări salvate.</p>';
+      return;
+    }
+
+    bookings.slice().reverse().forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'reservation-card';
+      card.innerHTML = `
+        <h5>${item.accommodation}</h5>
+        <p><strong>Perioadă:</strong> ${item.checkin} – ${item.checkout}</p>
+        <p><strong>Persoane:</strong> ${item.guests}</p>
+        <p><strong>Înregistrat:</strong> ${new Date(item.createdAt).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+        <p>${item.message ? `Notă: ${item.message}` : 'Fără cerințe speciale.'}</p>
+      `;
+      reservationList.appendChild(card);
+    });
+  }
+
+  async function updateAuthUI() {
+    const profile = await fetchProfile();
+    if (profile?.user) {
+      if (loginForm) loginForm.classList.add('hidden');
+      if (registerForm) registerForm.classList.add('hidden');
+      if (accountPanel) accountPanel.classList.remove('hidden');
+      if (accountName) accountName.textContent = profile.user.name;
+      const bookings = await fetchReservations();
+      if (reservationCount) reservationCount.textContent = bookings.length;
+      renderReservations(bookings);
+      if (submitBtn) submitBtn.disabled = false;
+      if (form) form.classList.remove('disabled');
+      if (guestNote) guestNote.textContent = 'Rezervările tale vor fi salvate în profilul tău.';
+      if (bookingEmail) {
+        bookingEmail.value = profile.user.email;
+        bookingEmail.disabled = true;
+      }
+      return;
+    }
+
+    if (accountPanel) accountPanel.classList.add('hidden');
+    setVisibleTab('login');
+    if (submitBtn) submitBtn.disabled = true;
+    if (form) form.classList.add('disabled');
+    if (guestNote) guestNote.textContent = 'Te autentifici sau înregistrezi pentru a salva rezervările în profilul tău.';
+    if (bookingEmail) {
+      bookingEmail.value = '';
+      bookingEmail.disabled = false;
+    }
+  }
+
+  function showAuthError(message, field) {
+    if (guestNote) guestNote.textContent = message;
+    if (field) {
+      gsap.to(field, {
+        borderColor: '#e74c3c',
+        duration: 0.3,
+        yoyo: true,
+        repeat: 1,
+        onComplete: () => gsap.to(field, { borderColor: 'rgba(201,168,76,0.2)', duration: 0.3 })
+      });
+      gsap.fromTo(field, { x: -6 }, { x: 0, duration: 0.4, ease: 'elastic.out(1, 0.3)' });
+    }
+  }
+
+  loginForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = loginEmail?.value.trim().toLowerCase();
+    const password = loginPassword?.value || '';
+    if (!email || !password) {
+      showAuthError('Completează email și parolă.', loginEmail || loginPassword);
+      return;
+    }
+
+    try {
+      const result = await loginUser(email, password);
+      setToken(result.token);
+      await updateAuthUI();
+    } catch (error) {
+      showAuthError(error?.error || 'Date incorecte. Verifică email-ul și parola.', loginEmail);
+    }
+  });
+
+  registerForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = registerName?.value.trim();
+    const email = registerEmail?.value.trim().toLowerCase();
+    const password = registerPassword?.value || '';
+    const confirm = registerPasswordConfirm?.value || '';
+
+    if (!name || !email || !password || !confirm) {
+      showAuthError('Completează toate câmpurile.', registerName || registerEmail);
+      return;
+    }
+    if (password !== confirm) {
+      showAuthError('Parolele nu coincid.', registerPassword);
+      return;
+    }
+
+    try {
+      const result = await registerUser(name, email, password);
+      setToken(result.token);
+      await updateAuthUI();
+    } catch (error) {
+      showAuthError(error?.error || 'Nu s-a putut crea contul.', registerEmail);
+    }
+  });
+
+  logoutBtn?.addEventListener('click', async () => {
+    clearToken();
+    await updateAuthUI();
+  });
+
+  updateAuthUI();
 
   // Confetti animation function
   function createConfetti() {
@@ -511,8 +1032,15 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
+
+    const token = getToken();
+    if (!token) {
+      showAuthError('Trebuie să fii autentificat pentru a trimite rezervarea.', loginEmail || loginPassword);
+      setVisibleTab('login');
+      return;
+    }
 
     // Basic validation
     let valid = true;
@@ -532,13 +1060,24 @@ window.addEventListener('DOMContentLoaded', () => {
 
     if (!valid) return;
 
-    // Add loading state to button
     submitBtn.classList.add('loading');
     submitBtn.disabled = true;
 
-    // Simulate processing delay
-    setTimeout(() => {
-      // Animate out form, show success
+    const bookingData = {
+      firstName: document.getElementById('fname')?.value.trim(),
+      lastName: document.getElementById('lname')?.value.trim(),
+      email: bookingEmail?.value.trim(),
+      accommodation: document.getElementById('accommodation')?.value,
+      checkin: document.getElementById('checkin')?.value,
+      checkout: document.getElementById('checkout')?.value,
+      guests: document.getElementById('guests')?.value,
+      message: document.getElementById('message')?.value.trim()
+    };
+
+    try {
+      await createBooking(bookingData);
+      await updateAuthUI();
+
       gsap.to(form, {
         opacity: 0,
         y: -20,
@@ -547,35 +1086,30 @@ window.addEventListener('DOMContentLoaded', () => {
         onComplete: () => {
           form.style.display = 'none';
           success.classList.add('active');
-          
-          // Create confetti effect
           createConfetti();
-          
-          // Animate success message
           gsap.fromTo(success,
             { opacity: 0, scale: 0.9, y: 20 },
             { opacity: 1, scale: 1, y: 0, duration: 0.8, ease: 'elastic.out(0.6, 0.6)' }
           );
-          
-          // Animate success icon with bounce
           gsap.fromTo('.success-icon',
             { scale: 0, rotation: -180 },
             { scale: 1, rotation: 0, duration: 0.8, delay: 0.1, ease: 'elastic.out(0.8, 0.8)' }
           );
-          
-          // Animate text elements
           gsap.fromTo('.form-success h3',
             { opacity: 0, y: 20 },
             { opacity: 1, y: 0, duration: 0.6, delay: 0.3 }
           );
-          
           gsap.fromTo('.form-success p',
             { opacity: 0, y: 15 },
             { opacity: 1, y: 0, duration: 0.6, delay: 0.4 }
           );
         }
       });
-    }, 1500); // Loading delay
+    } catch (error) {
+      submitBtn.classList.remove('loading');
+      submitBtn.disabled = false;
+      showAuthError(error?.error || 'Nu s-a putut salva rezervarea. Reîncearcă.', bookingEmail);
+    }
   });
 })();
 
@@ -615,6 +1149,36 @@ window.addEventListener('DOMContentLoaded', () => {
         duration: 0.7,
         ease: 'power2.out'
       });
+    });
+  });
+})();
+
+// ── 10. DESTINATION GUIDE OPTION ───────────────────────────────
+(function initDestinationGuideOption() {
+  document.querySelectorAll('.guide-btn').forEach(button => {
+    const basePrice = Number(button.dataset.basePrice) || 0;
+    const guidePrice = Number(button.dataset.guidePrice) || 30;
+    const originalText = button.textContent.trim();
+
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+      const active = button.classList.toggle('active');
+      const total = basePrice + (active ? guidePrice : 0);
+      button.textContent = active ? `Ghid adăugat +€${guidePrice}` : originalText;
+
+      const card = button.closest('.dest-card');
+      if (!card) return;
+      const meta = card.querySelector('.dest-meta');
+      if (!meta) return;
+      const priceLabel = meta.querySelector('.dest-price');
+      if (priceLabel) {
+        priceLabel.textContent = `de la €${total}`;
+      } else {
+        const span = document.createElement('span');
+        span.className = 'dest-price';
+        span.textContent = `de la €${total}`;
+        meta.appendChild(span);
+      }
     });
   });
 })();

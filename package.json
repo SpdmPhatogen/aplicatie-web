@@ -1,0 +1,15 @@
+{
+  "name": "gorj-booking-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Gorj Booking with login, registration and reservation persistence.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.18.4",
+    "jsonwebtoken": "^9.0.2",
+    "sqlite3": "^5.1.6"
+  }
+}
