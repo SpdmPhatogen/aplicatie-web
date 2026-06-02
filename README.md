@@ -1,86 +1,27 @@
-# 🏔️ GORJ BOOKING – Premium Luxury Tourism Website
+# Gorj Booking Backend
 
-> **Created by Teodor Becheanu & Popescu Alexandru**
+Acest proiect conține un backend Node.js/Express pentru autentificare și salvarea rezervărilor într-o bază de date SQLite.
 
----
+## Cum rulezi
+1. Instalează Node.js (includând npm).
+2. Deschide terminalul în directorul `Aplicatie web 2\Aplicatie web`.
+3. Rulează:
+   ```bash
+   npm install
+   npm start
+   ```
+4. Deschide browserul la:
+   ```
+   http://localhost:3000
+   ```
 
-## 📁 Structura Proiectului
+## Ce am implementat
+- API `POST /api/register` pentru crearea conturilor
+- API `POST /api/login` pentru autentificare
+- API `GET /api/profile` pentru datele utilizatorului
+- API `POST /api/bookings` pentru crearea rezervărilor
+- API `GET /api/bookings` pentru lista rezervărilor
+- Frontendul actualizat să folosescă token JWT și să afișeze istoricul rezervărilor în cont
 
-```
-gorj-booking/
-├── index.html        ← Structura HTML completă
-├── style.css         ← Design ultra luxury (CSS3 + animations)
-├── script.js         ← GSAP + Three.js + toate interacțiunile
-├── README.md         ← Documentație
-└── assets/
-    ├── images/       ← (imagini locale opționale)
-    └── videos/       ← (video local opțional)
-```
-
----
-
-## 🚀 Cum deschizi proiectul în VS Code
-
-1. **Deschide folderul** `gorj-booking/` în Visual Studio Code
-2. **Instalează extensia** `Live Server` (de la Ritwick Dey)
-3. Click dreapta pe `index.html` → **"Open with Live Server"**
-4. Site-ul se deschide automat pe `http://127.0.0.1:5500`
-
-> **Nu este nevoie de npm sau build tools** – proiectul rulează direct în browser.
-
----
-
-## ✨ Funcționalități Premium
-
-| Feature | Implementare |
-|---|---|
-| Loading screen animat | GSAP timeline |
-| Cursor custom auriu | JS + GSAP |
-| Hero cinematic | Three.js particles + parallax |
-| Animații scroll | GSAP ScrollTrigger |
-| Carduri 3D hover | CSS perspective + GSAP |
-| Carusel hoteluri | JS drag + GSAP |
-| Galerie lightbox | JS vanilla |
-| Formular de rezervare | Validare + animații |
-| Navbar sticky | Scroll listener + glassmorphism |
-| Marquee ticker | CSS animation |
-| Responsive complet | CSS Grid + Media Queries |
-
----
-
-## 🎨 Paleta de culori
-
-- **Negru principal**: `#000000` / `#0A0A0A`
-- **Auriu premium**: `#C9A84C`
-- **Auriu deschis**: `#E8C96A`
-- **Alb pur**: `#FFFFFF`
-- **Alb estompat**: `rgba(255,255,255,0.65)`
-
----
-
-## 🌐 Librării folosite (CDN – nu necesită instalare)
-
-- [GSAP 3.12.5](https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js)
-- [GSAP ScrollTrigger](https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js)
-- [Three.js r128](https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js)
-- [Google Fonts – Cormorant Garamond, Josefin Sans, Playfair Display](https://fonts.google.com)
-
----
-
-## 📸 Imagini
-
-Toate imaginile sunt de la **Unsplash** (licență gratuită) și se încarcă direct prin URL – nu necesită descărcare locală.
-
----
-
-## 🔧 Compatibilitate
-
-✅ Google Chrome (recomandat)  
-✅ Microsoft Edge  
-✅ Firefox  
-✅ Safari  
-✅ Mobile (iOS + Android)
-
----
-
-*© 2024 GORJ BOOKING – Luxury Tourism Experience, Gorj, România*
+## Notă
+Dacă `npm` nu este disponibil local pe mașina ta, instalează Node.js de pe https://nodejs.org/ și apoi rulează comenzile de mai sus.

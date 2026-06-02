@@ -974,97 +974,94 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function fetchProfile() {
+    const token = getToken();
+    if (!token) return null;
+    const profiles = JSON.parse(localStorage.getItem('gorjLocalProfiles') || '{}');
+    if (profiles[token]) {
+      return { user: profiles[token] };
+    }
+    // Fallback to backend profile if local profile missing
     try {
       return await apiFetch('/api/profile');
     } catch (error) {
-      // Fallback to local profiles when backend unavailable
-      const token = getToken();
-      if (!token) return null;
-      const profiles = JSON.parse(localStorage.getItem('gorjLocalProfiles') || '{}');
-      if (profiles[token]) {
-        return { user: profiles[token] };
-      }
       clearToken();
       return null;
     }
   }
 
   async function fetchReservations() {
+    const token = getToken();
+    const bookings = JSON.parse(localStorage.getItem('gorjLocalBookings') || '[]');
+    const userBookings = bookings.filter(b => b.ownerToken === token);
+    if (userBookings.length) return userBookings;
+    // Fallback to backend bookings if no local bookings found
     try {
       const result = await apiFetch('/api/bookings');
-      const remote = result.bookings || [];
-      // merge with local fallback bookings
-      const local = JSON.parse(localStorage.getItem('gorjBookingsLocal') || '[]');
-      return remote.concat(local || []);
+      return result.bookings || [];
     } catch (error) {
-      // return local fallback bookings when API is unavailable
-      return JSON.parse(localStorage.getItem('gorjBookingsLocal') || '[]');
+      return userBookings;
     }
+  }
+
+  function stableTokenForEmail(email) {
+    return 'local-' + email.toLowerCase().replace(/[^a-z0-9]+/g, '_');
   }
 
   async function loginUser(email, password) {
-    try {
-      return await apiFetch('/api/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password })
-      });
-    } catch (err) {
-      // Local fallback: check users stored in localStorage
-      const users = JSON.parse(localStorage.getItem('gorjLocalUsers') || '[]');
-      const user = users.find(u => u.email === email);
-      if (!user) throw { error: 'Utilizator inexistent. Creează un cont.' };
-      if (user.password !== password) throw { error: 'Parolă incorectă.' };
-      const token = 'local-token-' + Date.now();
-      // store profile mapped to token
-      const profiles = JSON.parse(localStorage.getItem('gorjLocalProfiles') || '{}');
-      profiles[token] = { name: user.name, email: user.email };
-      localStorage.setItem('gorjLocalProfiles', JSON.stringify(profiles));
-      return { token, user: { name: user.name, email: user.email } };
+    // Local first: validate against saved users
+    const users = JSON.parse(localStorage.getItem('gorjLocalUsers') || '[]');
+    const user = users.find(u => u.email === email);
+    if (!user) {
+      // try backend if local not found
+      try {
+        return await apiFetch('/api/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        });
+      } catch (err) {
+        throw { error: 'Utilizator inexistent. Creează un cont.' };
+      }
     }
+    if (user.password !== password) throw { error: 'Parolă incorectă.' };
+    const token = stableTokenForEmail(email);
+    const profiles = JSON.parse(localStorage.getItem('gorjLocalProfiles') || '{}');
+    profiles[token] = { name: user.name, email: user.email };
+    localStorage.setItem('gorjLocalProfiles', JSON.stringify(profiles));
+    return { token, user: { name: user.name, email: user.email } };
   }
 
   async function registerUser(name, email, password) {
-    try {
-      return await apiFetch('/api/register', {
-        method: 'POST',
-        body: JSON.stringify({ name, email, password })
-      });
-    } catch (err) {
-      // Local fallback: save user in localStorage
-      const users = JSON.parse(localStorage.getItem('gorjLocalUsers') || '[]');
-      if (users.find(u => u.email === email)) throw { error: 'Email deja folosit.' };
-      const newUser = { name, email, password };
-      users.push(newUser);
-      localStorage.setItem('gorjLocalUsers', JSON.stringify(users));
-      const token = 'local-token-' + Date.now();
-      const profiles = JSON.parse(localStorage.getItem('gorjLocalProfiles') || '{}');
-      profiles[token] = { name, email };
-      localStorage.setItem('gorjLocalProfiles', JSON.stringify(profiles));
-      return { token, user: { name, email } };
+    const users = JSON.parse(localStorage.getItem('gorjLocalUsers') || '[]');
+    if (users.find(u => u.email === email)) {
+      throw { error: 'Email deja folosit.' };
     }
+    const newUser = { name, email, password };
+    users.push(newUser);
+    localStorage.setItem('gorjLocalUsers', JSON.stringify(users));
+    const token = stableTokenForEmail(email);
+    const profiles = JSON.parse(localStorage.getItem('gorjLocalProfiles') || '{}');
+    profiles[token] = { name, email };
+    localStorage.setItem('gorjLocalProfiles', JSON.stringify(profiles));
+    return { token, user: { name, email } };
   }
 
   async function createBooking(bookingData) {
-    // Try backend first; if it fails (no backend), save to localStorage as fallback
+    const token = getToken();
+    const ownerToken = token || null;
+    const item = Object.assign({}, bookingData, {
+      createdAt: new Date().toISOString(),
+      id: 'local-booking-' + Date.now(),
+      ownerToken
+    });
+    const key = 'gorjLocalBookings';
+    const existing = JSON.parse(localStorage.getItem(key) || '[]');
+    existing.push(item);
+    localStorage.setItem(key, JSON.stringify(existing));
     try {
-      return await apiFetch('/api/bookings', {
-        method: 'POST',
-        body: JSON.stringify(bookingData)
-      });
-    } catch (err) {
-      // Fallback to local storage
-      const key = 'gorjBookingsLocal';
-      const existing = JSON.parse(localStorage.getItem(key) || '[]');
-      const item = Object.assign({}, bookingData, { createdAt: new Date().toISOString(), id: 'local-' + Date.now() });
-      existing.push(item);
-      localStorage.setItem(key, JSON.stringify(existing));
-      // If account UI present, render it immediately
-      try {
-        const bookings = existing.slice();
-        renderReservations(bookings);
-      } catch (e) { /* ignore */ }
-      return { ok: true, booking: item };
-    }
+      const bookings = existing.filter(b => b.ownerToken === ownerToken);
+      renderReservations(bookings);
+    } catch (e) { /* ignore */ }
+    return { ok: true, booking: item };
   }
 
   function setVisibleTab(tab) {
