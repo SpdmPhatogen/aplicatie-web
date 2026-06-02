@@ -41,6 +41,52 @@
     </div>
   </div>
 
+  <!-- AUTH MODAL (shown on first visit when not logged in) -->
+  <div id="auth-modal" class="auth-modal hidden" aria-hidden="true">
+    <div class="auth-modal-overlay"></div>
+    <div class="auth-modal-content">
+      <h2>Conectează-te sau Creează un cont</h2>
+      <div class="account-tabs modal-tabs">
+        <button type="button" class="account-tab active" data-tab="modal-login">Autentificare</button>
+        <button type="button" class="account-tab" data-tab="modal-register">Înregistrare</button>
+      </div>
+
+      <div class="modal-auth-forms">
+        <form id="modal-login-form" class="auth-form" novalidate>
+          <div class="form-group">
+            <label for="modal-login-email">Email</label>
+            <input type="email" id="modal-login-email" name="modalLoginEmail" required />
+          </div>
+          <div class="form-group">
+            <label for="modal-login-password">Parolă</label>
+            <input type="password" id="modal-login-password" name="modalLoginPassword" required />
+          </div>
+          <button type="submit" class="btn-submit btn-account-submit">Conectare</button>
+        </form>
+
+        <form id="modal-register-form" class="auth-form hidden" novalidate>
+          <div class="form-group">
+            <label for="modal-register-name">Nume complet</label>
+            <input type="text" id="modal-register-name" name="modalRegisterName" required />
+          </div>
+          <div class="form-group">
+            <label for="modal-register-email">Email</label>
+            <input type="email" id="modal-register-email" name="modalRegisterEmail" required />
+          </div>
+          <div class="form-group">
+            <label for="modal-register-password">Parolă</label>
+            <input type="password" id="modal-register-password" name="modalRegisterPassword" required />
+          </div>
+          <div class="form-group">
+            <label for="modal-register-password-confirm">Confirmă parola</label>
+            <input type="password" id="modal-register-password-confirm" name="modalRegisterPasswordConfirm" required />
+          </div>
+          <button type="submit" class="btn-submit btn-account-submit">Creează cont</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══════════════════════════════════════════ CUSTOM CURSOR -->
   <div id="cursor"></div>
   <div id="cursor-follower"></div>
@@ -653,14 +699,21 @@
               <label for="accommodation">Cazare</label>
               <select id="accommodation" name="accommodation" required>
                 <option value="" disabled selected>Alege cazarea</option>
-                <option value="valea-maria">Valea Mariei</option>
-                <option value="vila-ozon-ranca">Vila Ozon Ranca</option>
-                <option value="cabana-transalpina">Cabana Transalpina</option>
-                <option value="pensiunea-antonia">Pensiunea Antonia Spa</option>
-                <option value="pensiunea-alpin">Pensiunea Alpin</option>
-                <option value="cabana-terra">Cabana Terra</option>
-                <option value="taverna-olteanului">Taverna Olteanului</option>
               </select>
+            </div>
+
+            <div class="form-group" id="room-type-wrap" style="display:none;">
+              <label for="room-type">Tip cameră</label>
+              <select id="room-type" name="roomType"></select>
+              <div class="room-help">
+                <span id="price-per-night">Preț: -</span>
+                <span id="nights-count" style="margin-left:1rem">Nopți: -</span>
+              </div>
+            </div>
+
+            <div class="form-group" id="total-wrap" style="display:none;">
+              <label>Total estimat</label>
+              <div id="total-price" class="total-price">-</div>
             </div>
 
             <div class="form-row">

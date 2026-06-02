@@ -1091,6 +1091,14 @@ section {
   font-size: 0.86rem;
 }
 
+.location-card-actions {
+  margin-top: 0.6rem;
+}
+.location-reserve {
+  padding: 0.5rem 0.9rem;
+  font-size: 0.9rem;
+}
+
 .location-card-price {
   font-family: var(--font-display);
   font-size: 1.15rem;
@@ -1230,15 +1238,52 @@ section {
   }
 
   .accom-map-frame {
-    min-height: 400px;
+    min-height: 320px;
+  }
+
+  .accom-detail-panel {
+    padding: 1.5rem;
+  }
+
+  .booking-content {
+    padding: 3.5rem 2rem;
   }
 
   .booking-form-wrap {
+    padding: 1.5rem;
     grid-template-columns: 1fr;
+    gap: 1.25rem;
   }
 
   .booking-divider {
     display: none;
+  }
+
+  .account-tabs {
+    gap: 0.5rem;
+  }
+
+  .account-tab {
+    padding: 0.85rem 0.9rem;
+  }
+
+  .account-panel {
+    padding: 1.25rem;
+  }
+
+  .account-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .account-stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .accom-detail-gallery img {
+    height: 150px;
   }
 }
 
@@ -1536,6 +1581,10 @@ section {
   grid-template-columns: 1fr 1.2fr;
   gap: 2rem;
 }
+
+.room-help { margin-top: 0.5rem; font-size: 0.9rem; color: var(--white-dim); display:flex; align-items:center; }
+.total-price { font-family: var(--font-display); font-size: 1.25rem; color: var(--gold); margin-top: 0.5rem; }
+.form-group select#room-type { margin-top: 0.5rem; }
 
 .account-widget {
   display: flex;
@@ -2065,6 +2114,60 @@ section {
 
   .gallery-mosaic { grid-template-columns: 1fr; }
 
+  .booking-content {
+    padding: 3rem 1rem;
+    gap: 2rem;
+  }
+
+  .booking-form-wrap {
+    padding: 1.25rem;
+    gap: 1rem;
+  }
+
+  .account-tabs {
+    flex-direction: column;
+  }
+
+  .account-tab {
+    width: 100%;
+    text-align: center;
+  }
+
+  .account-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .account-stats {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .accom-map-frame {
+    min-height: 280px;
+  }
+
+  #google-map-frame {
+    min-height: 240px;
+  }
+
+  .accom-detail-gallery {
+    grid-template-columns: 1fr;
+  }
+
+  .accom-detail-gallery img {
+    height: 180px;
+  }
+
+  .accom-detail-close {
+    top: 1rem;
+    right: 1rem;
+  }
+
+  .accom-map-note {
+    font-size: 0.9rem;
+  }
+
   .footer-top { grid-template-columns: 1fr; gap: 2rem; }
   .footer-bottom-inner { flex-direction: column; text-align: center; }
 
@@ -2082,3 +2185,31 @@ section {
 ::-webkit-scrollbar-track { background: var(--black); }
 ::-webkit-scrollbar-thumb { background: var(--gold-dark); }
 ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+/* ── AUTH MODAL ─────────────────────────────────────────────────── */
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 2000;
+}
+.auth-modal.hidden { display: none; }
+.auth-modal-overlay {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.75);
+}
+.auth-modal-content {
+  position: relative;
+  width: min(700px, 92vw);
+  background: rgba(10,10,10,0.95);
+  border: 1px solid rgba(201,168,76,0.12);
+  padding: 2rem;
+  border-radius: 16px;
+  z-index: 2001;
+}
+.auth-modal-content h2 { margin-top: 0; margin-bottom: 1rem; font-family: var(--font-display); }
+.modal-tabs { display:flex; gap:0.5rem; margin-bottom:1rem; }
+.modal-auth-forms { display:block; }
+.auth-modal .auth-form { max-width: 100%; }
+.auth-modal .auth-form .form-group input { width: 100%; }
+

@@ -646,6 +646,11 @@ window.addEventListener('DOMContentLoaded', () => {
       position: { left: '74%', top: '28%' },
       distanceFromPrevious: '18 km / 28 min',
       previous: 'Taverna Olteanului'
+      ,
+      roomTypes: [
+        { id: 'standard', name: 'Standard', price: 180, capacity: 2 },
+        { id: 'deluxe', name: 'Deluxe', price: 230, capacity: 4 }
+      ]
     }
   ];
 
@@ -677,10 +682,21 @@ window.addEventListener('DOMContentLoaded', () => {
           <span>·</span>
           <span>${location.price}</span>
         </div>
+        <div class="location-card-actions">
+          <button type="button" class="btn-primary location-reserve">Rezervă</button>
+        </div>
       </div>
       <div class="location-card-hover">${location.short}</div>
     `;
     card.addEventListener('click', () => openLocation(location.id));
+
+    const reserveBtn = card.querySelector('.location-reserve');
+    if (reserveBtn) {
+      reserveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openBookingFor && openBookingFor(location.id);
+      });
+    }
     return card;
   }
 
@@ -735,6 +751,127 @@ window.addEventListener('DOMContentLoaded', () => {
     mapFrame.appendChild(makePin(location));
   });
 
+  // expose accommodations for other modules (e.g., reservation renderer)
+  window.GORJ_ACCOMMODATIONS = accommodations;
+
+  // Populate accommodation select with dynamic room types
+  const accomSelect = document.getElementById('accommodation');
+  const roomTypeWrap = document.getElementById('room-type-wrap');
+  const roomTypeSelect = document.getElementById('room-type');
+  const pricePerNightLabel = document.getElementById('price-per-night');
+  const nightsCountLabel = document.getElementById('nights-count');
+  const totalWrap = document.getElementById('total-wrap');
+  const totalPriceLabel = document.getElementById('total-price');
+
+  if (accomSelect) {
+    accommodations.forEach(loc => {
+      const opt = document.createElement('option');
+      opt.value = loc.id;
+      opt.textContent = loc.name + ' — ' + loc.region;
+      accomSelect.appendChild(opt);
+    });
+
+    accomSelect.addEventListener('change', () => {
+      const id = accomSelect.value;
+      const loc = accommodations.find(a => a.id === id);
+      if (!loc) return;
+      // Populate room types (or fallback to base price)
+      roomTypeSelect.innerHTML = '';
+      if (Array.isArray(loc.roomTypes) && loc.roomTypes.length) {
+        loc.roomTypes.forEach(rt => {
+          const o = document.createElement('option');
+          o.value = rt.id;
+          o.textContent = `${rt.name} — €${rt.price} / noapte (${rt.capacity} pers)`;
+          o.dataset.price = rt.price;
+          o.dataset.capacity = rt.capacity;
+          roomTypeSelect.appendChild(o);
+        });
+        roomTypeWrap.style.display = '';
+        totalWrap.style.display = '';
+        updatePriceAndTotal();
+      } else {
+        // parse price from loc.price (string like '€120 / noapte')
+        const p = String(loc.price || '').match(/([0-9,.]+)/);
+        const base = p ? Number(p[1].replace(',', '.')) : 0;
+        roomTypeWrap.style.display = 'none';
+        totalWrap.style.display = '';
+        pricePerNightLabel.textContent = `Preț: €${base} / noapte`;
+        updatePriceAndTotal();
+      }
+    });
+  }
+
+    // Open booking form prefilled for a given accommodation id
+    function openBookingFor(id) {
+      const bookingSection = document.getElementById('booking');
+      const accom = document.getElementById('accommodation');
+      const form = document.getElementById('booking-form');
+      const successEl = document.getElementById('form-success');
+      if (accom) {
+        accom.value = id;
+        accom.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      // show form and hide success state
+      if (form) { form.style.display = ''; form.classList.remove('disabled'); }
+      if (successEl) successEl.classList.remove('active');
+
+      // choose first room type if available and recalc
+      const rt = document.getElementById('room-type');
+      if (rt && rt.options.length) { rt.selectedIndex = 0; }
+      if (typeof updatePriceAndTotal === 'function') updatePriceAndTotal();
+
+      // scroll to booking and focus first input
+      if (bookingSection) {
+        setTimeout(() => {
+          bookingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          const fname = document.getElementById('fname');
+          if (fname) fname.focus();
+        }, 150);
+      }
+    }
+
+  // Price & total update helper (reads form inputs and computes total)
+  function updatePriceAndTotal() {
+    const accomId = accomSelect?.value;
+    const roomId = roomTypeSelect?.value;
+    const checkinEl = document.getElementById('checkin');
+    const checkoutEl = document.getElementById('checkout');
+    const guestsEl = document.getElementById('guests');
+
+    if (!accomId || !roomId) {
+      pricePerNightLabel.textContent = 'Preț: -';
+      nightsCountLabel.textContent = 'Nopți: -';
+      totalPriceLabel.textContent = '-';
+      return;
+    }
+
+    const loc = accommodations.find(a => a.id === accomId);
+    const room = loc && loc.roomTypes ? loc.roomTypes.find(r => r.id === roomId) : null;
+    const price = room ? Number(room.price) : (loc && loc.price ? parseFloat(String(loc.price).replace(/[^0-9.]/g, '')) : 0);
+
+    // compute nights
+    let nights = 1;
+    if (checkinEl && checkoutEl && checkinEl.value && checkoutEl.value) {
+      const d1 = new Date(checkinEl.value);
+      const d2 = new Date(checkoutEl.value);
+      const ms = d2 - d1;
+      nights = Math.max(1, Math.round(ms / (1000 * 60 * 60 * 24)));
+    }
+
+    const guests = guestsEl ? Number(guestsEl.value) || 1 : 1;
+    const total = (price * nights);
+
+    pricePerNightLabel.textContent = `Preț: €${price} / noapte`;
+    nightsCountLabel.textContent = `Nopți: ${nights}`;
+    totalPriceLabel.textContent = `€${total.toFixed(2)}`;
+  }
+
+  // Attach listeners so UI updates when dates/guests/room change
+  document.addEventListener('change', (e) => {
+    const ids = ['checkin','checkout','guests','room-type','accommodation'];
+    if (ids.includes(e.target?.id)) updatePriceAndTotal();
+  });
+
   detailClose?.addEventListener('click', closeDetails);
   detailCloseBtn?.addEventListener('click', closeDetails);
 
@@ -765,6 +902,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const API_BASE = '';
   const tokenKey = 'gorjBookingToken';
+  const authModal = document.getElementById('auth-modal');
+  const modalLoginForm = document.getElementById('modal-login-form');
+  const modalRegisterForm = document.getElementById('modal-register-form');
+  const modalAuthTabs = document.querySelectorAll('#auth-modal .account-tab');
   const loginForm = document.getElementById('login-form');
   const registerForm = document.getElementById('register-form');
   const accountPanel = document.getElementById('account-panel');
@@ -772,7 +913,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const reservationList = document.getElementById('reservation-list');
   const reservationCount = document.getElementById('account-reservation-count');
   const guestNote = document.getElementById('guest-note');
-  const authTabs = document.querySelectorAll('.account-tab');
+  const authTabs = document.querySelectorAll('.account-widget .account-tab');
   const logoutBtn = document.getElementById('logout-btn');
   const loginEmail = document.getElementById('login-email');
   const loginPassword = document.getElementById('login-password');
@@ -792,6 +933,20 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function clearToken() {
     localStorage.removeItem(tokenKey);
+  }
+
+  function showAuthModal() {
+    if (!authModal) return;
+    authModal.classList.remove('hidden');
+    authModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function hideAuthModal() {
+    if (!authModal) return;
+    authModal.classList.add('hidden');
+    authModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
   }
 
   async function apiFetch(path, options = {}) {
@@ -822,6 +977,13 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
       return await apiFetch('/api/profile');
     } catch (error) {
+      // Fallback to local profiles when backend unavailable
+      const token = getToken();
+      if (!token) return null;
+      const profiles = JSON.parse(localStorage.getItem('gorjLocalProfiles') || '{}');
+      if (profiles[token]) {
+        return { user: profiles[token] };
+      }
       clearToken();
       return null;
     }
@@ -830,31 +992,79 @@ window.addEventListener('DOMContentLoaded', () => {
   async function fetchReservations() {
     try {
       const result = await apiFetch('/api/bookings');
-      return result.bookings || [];
+      const remote = result.bookings || [];
+      // merge with local fallback bookings
+      const local = JSON.parse(localStorage.getItem('gorjBookingsLocal') || '[]');
+      return remote.concat(local || []);
     } catch (error) {
-      return [];
+      // return local fallback bookings when API is unavailable
+      return JSON.parse(localStorage.getItem('gorjBookingsLocal') || '[]');
     }
   }
 
   async function loginUser(email, password) {
-    return apiFetch('/api/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password })
-    });
+    try {
+      return await apiFetch('/api/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
+    } catch (err) {
+      // Local fallback: check users stored in localStorage
+      const users = JSON.parse(localStorage.getItem('gorjLocalUsers') || '[]');
+      const user = users.find(u => u.email === email);
+      if (!user) throw { error: 'Utilizator inexistent. Creează un cont.' };
+      if (user.password !== password) throw { error: 'Parolă incorectă.' };
+      const token = 'local-token-' + Date.now();
+      // store profile mapped to token
+      const profiles = JSON.parse(localStorage.getItem('gorjLocalProfiles') || '{}');
+      profiles[token] = { name: user.name, email: user.email };
+      localStorage.setItem('gorjLocalProfiles', JSON.stringify(profiles));
+      return { token, user: { name: user.name, email: user.email } };
+    }
   }
 
   async function registerUser(name, email, password) {
-    return apiFetch('/api/register', {
-      method: 'POST',
-      body: JSON.stringify({ name, email, password })
-    });
+    try {
+      return await apiFetch('/api/register', {
+        method: 'POST',
+        body: JSON.stringify({ name, email, password })
+      });
+    } catch (err) {
+      // Local fallback: save user in localStorage
+      const users = JSON.parse(localStorage.getItem('gorjLocalUsers') || '[]');
+      if (users.find(u => u.email === email)) throw { error: 'Email deja folosit.' };
+      const newUser = { name, email, password };
+      users.push(newUser);
+      localStorage.setItem('gorjLocalUsers', JSON.stringify(users));
+      const token = 'local-token-' + Date.now();
+      const profiles = JSON.parse(localStorage.getItem('gorjLocalProfiles') || '{}');
+      profiles[token] = { name, email };
+      localStorage.setItem('gorjLocalProfiles', JSON.stringify(profiles));
+      return { token, user: { name, email } };
+    }
   }
 
   async function createBooking(bookingData) {
-    return apiFetch('/api/bookings', {
-      method: 'POST',
-      body: JSON.stringify(bookingData)
-    });
+    // Try backend first; if it fails (no backend), save to localStorage as fallback
+    try {
+      return await apiFetch('/api/bookings', {
+        method: 'POST',
+        body: JSON.stringify(bookingData)
+      });
+    } catch (err) {
+      // Fallback to local storage
+      const key = 'gorjBookingsLocal';
+      const existing = JSON.parse(localStorage.getItem(key) || '[]');
+      const item = Object.assign({}, bookingData, { createdAt: new Date().toISOString(), id: 'local-' + Date.now() });
+      existing.push(item);
+      localStorage.setItem(key, JSON.stringify(existing));
+      // If account UI present, render it immediately
+      try {
+        const bookings = existing.slice();
+        renderReservations(bookings);
+      } catch (e) { /* ignore */ }
+      return { ok: true, booking: item };
+    }
   }
 
   function setVisibleTab(tab) {
@@ -875,6 +1085,54 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Modal tab switching
+  modalAuthTabs.forEach(button => {
+    button.addEventListener('click', () => {
+      const tab = button.dataset.tab;
+      modalAuthTabs.forEach(b => b.classList.toggle('active', b === button));
+      if (modalLoginForm && modalRegisterForm) {
+        modalLoginForm.classList.toggle('hidden', tab !== 'modal-login');
+        modalRegisterForm.classList.toggle('hidden', tab !== 'modal-register');
+      }
+    });
+  });
+
+  // Modal form submits (use same API helpers)
+  modalLoginForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = document.getElementById('modal-login-email')?.value.trim().toLowerCase();
+    const password = document.getElementById('modal-login-password')?.value || '';
+    if (!email || !password) return;
+    try {
+      const res = await loginUser(email, password);
+      setToken(res.token);
+      await updateAuthUI();
+      hideAuthModal();
+    } catch (err) {
+      // show inline feedback
+      const f = document.getElementById('modal-login-email');
+      if (f) showAuthError(err?.error || 'Date incorecte. Verifică email-ul și parola.', f);
+    }
+  });
+
+  modalRegisterForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = document.getElementById('modal-register-name')?.value.trim();
+    const email = document.getElementById('modal-register-email')?.value.trim().toLowerCase();
+    const password = document.getElementById('modal-register-password')?.value || '';
+    const confirm = document.getElementById('modal-register-password-confirm')?.value || '';
+    if (!name || !email || !password || !confirm) return showAuthError('Completează toate câmpurile.', document.getElementById('modal-register-name'));
+    if (password !== confirm) return showAuthError('Parolele nu coincid.', document.getElementById('modal-register-password'));
+    try {
+      const res = await registerUser(name, email, password);
+      setToken(res.token);
+      await updateAuthUI();
+      hideAuthModal();
+    } catch (err) {
+      showAuthError(err?.error || 'Nu s-a putut crea contul.', document.getElementById('modal-register-email'));
+    }
+  });
+
   function renderReservations(bookings) {
     if (!reservationList) return;
 
@@ -887,8 +1145,9 @@ window.addEventListener('DOMContentLoaded', () => {
     bookings.slice().reverse().forEach(item => {
       const card = document.createElement('div');
       card.className = 'reservation-card';
+      const accomName = (window.GORJ_ACCOMMODATIONS || []).find(a => a.id === item.accommodation)?.name || item.accommodation || 'Cazare';
       card.innerHTML = `
-        <h5>${item.accommodation}</h5>
+        <h5>${accomName}</h5>
         <p><strong>Perioadă:</strong> ${item.checkin} – ${item.checkout}</p>
         <p><strong>Persoane:</strong> ${item.guests}</p>
         <p><strong>Înregistrat:</strong> ${new Date(item.createdAt).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
@@ -901,6 +1160,8 @@ window.addEventListener('DOMContentLoaded', () => {
   async function updateAuthUI() {
     const profile = await fetchProfile();
     if (profile?.user) {
+      // hide auth modal when logged in
+      try { hideAuthModal(); } catch (e) { }
       if (loginForm) loginForm.classList.add('hidden');
       if (registerForm) registerForm.classList.add('hidden');
       if (accountPanel) accountPanel.classList.remove('hidden');
@@ -920,6 +1181,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     if (accountPanel) accountPanel.classList.add('hidden');
     setVisibleTab('login');
+    // show auth modal when not logged in
+    try { showAuthModal(); } catch (e) { }
     if (submitBtn) submitBtn.disabled = true;
     if (form) form.classList.add('disabled');
     if (guestNote) guestNote.textContent = 'Te autentifici sau înregistrezi pentru a salva rezervările în profilul tău.';
@@ -1071,7 +1334,24 @@ window.addEventListener('DOMContentLoaded', () => {
       checkin: document.getElementById('checkin')?.value,
       checkout: document.getElementById('checkout')?.value,
       guests: document.getElementById('guests')?.value,
-      message: document.getElementById('message')?.value.trim()
+      message: document.getElementById('message')?.value.trim(),
+      roomType: document.getElementById('room-type')?.value || null,
+      pricePerNight: (function(){
+        const rp = document.getElementById('price-per-night')?.textContent || '';
+        const m = rp.match(/€([0-9,.]+)/);
+        return m ? Number(m[1].replace(',', '.')) : null;
+      })(),
+      nights: (function(){
+        const ci = document.getElementById('checkin')?.value;
+        const co = document.getElementById('checkout')?.value;
+        if (!ci || !co) return 1;
+        return Math.max(1, Math.round((new Date(co) - new Date(ci)) / (1000*60*60*24)));
+      })(),
+      totalPrice: (function(){
+        const p = (document.getElementById('price-per-night')?.textContent || '').match(/€([0-9,.]+)/);
+        const nights = (function(){ const ci=document.getElementById('checkin')?.value; const co=document.getElementById('checkout')?.value; if(!ci||!co) return 1; return Math.max(1, Math.round((new Date(co)-new Date(ci))/(1000*60*60*24))); })();
+        return p ? Number(p[1].replace(',', '.')) * nights : null;
+      })()
     };
 
     try {
