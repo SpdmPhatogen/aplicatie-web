@@ -103,10 +103,35 @@
       <a href="#about" class="nav-link">Despre</a>
       <a href="#booking" class="nav-link nav-cta">Rezervă</a>
     </div>
+    <div class="nav-account">
+      <button id="account-button" type="button" class="btn-account-nav">Cont</button>
+    </div>
     <div class="nav-hamburger" id="hamburger">
       <span></span><span></span><span></span>
     </div>
   </nav>
+
+  <div class="account-widget-wrapper hidden" id="account-widget-wrapper">
+    <div class="account-widget">
+      <div class="account-panel hidden" id="account-panel">
+        <div class="account-header">
+          <div>
+            <span class="account-welcome">Bun venit,</span>
+            <strong id="account-name"></strong>
+          </div>
+          <button type="button" class="btn-ghost" id="logout-btn">Deconectare</button>
+        </div>
+        <div class="account-stats">
+          <span id="account-reservation-count">0</span>
+          <span>Rezervări salvate</span>
+        </div>
+        <div class="account-reservations">
+          <h4>Rezervările tale</h4>
+          <div id="reservation-list" class="reservation-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ═══════════════════════════════════════════ HERO SECTION -->
   <section id="hero">
@@ -607,69 +632,6 @@
       </div>
 
       <div class="booking-form-wrap glass">
-        <div class="account-widget">
-          <div class="account-tabs">
-            <button type="button" class="account-tab active" data-tab="login">Autentificare</button>
-            <button type="button" class="account-tab" data-tab="register">Înregistrare</button>
-          </div>
-
-          <div class="auth-forms">
-            <form id="login-form" class="auth-form active" novalidate>
-              <div class="form-group">
-                <label for="login-email">Email</label>
-                <input type="email" id="login-email" name="loginEmail" placeholder="ion@email.ro" required />
-              </div>
-              <div class="form-group">
-                <label for="login-password">Parolă</label>
-                <input type="password" id="login-password" name="loginPassword" placeholder="••••••••" required />
-              </div>
-              <button type="submit" class="btn-submit btn-account-submit">
-                <span class="btn-submit-text">Conectare</span>
-              </button>
-            </form>
-
-            <form id="register-form" class="auth-form hidden" novalidate>
-              <div class="form-group">
-                <label for="register-name">Nume complet</label>
-                <input type="text" id="register-name" name="registerName" placeholder="Ion Popescu" required />
-              </div>
-              <div class="form-group">
-                <label for="register-email">Email</label>
-                <input type="email" id="register-email" name="registerEmail" placeholder="ion@email.ro" required />
-              </div>
-              <div class="form-group">
-                <label for="register-password">Parolă</label>
-                <input type="password" id="register-password" name="registerPassword" placeholder="••••••••" required />
-              </div>
-              <div class="form-group">
-                <label for="register-password-confirm">Confirmă parola</label>
-                <input type="password" id="register-password-confirm" name="registerPasswordConfirm" placeholder="••••••••" required />
-              </div>
-              <button type="submit" class="btn-submit btn-account-submit">
-                <span class="btn-submit-text">Creează cont</span>
-              </button>
-            </form>
-          </div>
-
-          <div class="account-panel hidden" id="account-panel">
-            <div class="account-header">
-              <div>
-                <span class="account-welcome">Bun venit,</span>
-                <strong id="account-name"></strong>
-              </div>
-              <button type="button" class="btn-ghost" id="logout-btn">Deconectare</button>
-            </div>
-            <div class="account-stats">
-              <span id="account-reservation-count">0</span>
-              <span>Rezervări salvate</span>
-            </div>
-            <div class="account-reservations">
-              <h4>Rezervările tale</h4>
-              <div id="reservation-list" class="reservation-list"></div>
-            </div>
-          </div>
-        </div>
-
         <div class="booking-divider"></div>
 
         <div class="booking-form-panel">

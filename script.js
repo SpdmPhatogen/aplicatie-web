@@ -914,6 +914,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const reservationCount = document.getElementById('account-reservation-count');
   const guestNote = document.getElementById('guest-note');
   const authTabs = document.querySelectorAll('.account-widget .account-tab');
+  const accountButton = document.getElementById('account-button');
+  const accountWidgetWrapper = document.getElementById('account-widget-wrapper');
   const logoutBtn = document.getElementById('logout-btn');
   const loginEmail = document.getElementById('login-email');
   const loginPassword = document.getElementById('login-password');
@@ -1082,6 +1084,30 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  function refreshAccountButton(profile) {
+    if (!accountButton) return;
+    if (profile?.user) {
+      accountButton.textContent = profile.user.name;
+    } else {
+      accountButton.textContent = 'Cont';
+    }
+  }
+
+  accountButton?.addEventListener('click', async () => {
+    const profile = await fetchProfile();
+    if (profile?.user) {
+      refreshAccountButton(profile);
+      if (!accountWidgetWrapper) return;
+      accountWidgetWrapper.classList.toggle('hidden');
+      if (!accountWidgetWrapper.classList.contains('hidden')) {
+        accountPanel?.classList.remove('hidden');
+      }
+    } else {
+      if (accountWidgetWrapper) accountWidgetWrapper.classList.add('hidden');
+      showAuthModal();
+    }
+  });
+
   // Modal tab switching
   modalAuthTabs.forEach(button => {
     button.addEventListener('click', () => {
@@ -1156,11 +1182,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
   async function updateAuthUI() {
     const profile = await fetchProfile();
+    refreshAccountButton(profile);
     if (profile?.user) {
       // hide auth modal when logged in
       try { hideAuthModal(); } catch (e) { }
-      if (loginForm) loginForm.classList.add('hidden');
-      if (registerForm) registerForm.classList.add('hidden');
       if (accountPanel) accountPanel.classList.remove('hidden');
       if (accountName) accountName.textContent = profile.user.name;
       const bookings = await fetchReservations();
@@ -1173,10 +1198,13 @@ window.addEventListener('DOMContentLoaded', () => {
         bookingEmail.value = profile.user.email;
         bookingEmail.disabled = true;
       }
+      refreshAccountButton(profile);
       return;
     }
 
     if (accountPanel) accountPanel.classList.add('hidden');
+    if (accountWidgetWrapper) accountWidgetWrapper.classList.add('hidden');
+    refreshAccountButton(null);
     setVisibleTab('login');
     // show auth modal when not logged in
     try { showAuthModal(); } catch (e) { }
